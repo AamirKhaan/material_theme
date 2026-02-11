@@ -2,77 +2,92 @@ frappe.provide("material.theme");
 
 $(document).on("toolbar_setup", function () {
 	const root = document.documentElement;
-	let theme_mode = root.getAttribute("data-theme-mode");
-	console.log(theme_mode);
-	if (theme_mode !== "material")
-	{
+	const theme_mode = root.getAttribute("data-theme-mode");
+	if (theme_mode !== "material") {
 		return;
 	}
-	var themeColor = localStorage.getItem("ItrostackThemeColor");
-	if(themeColor)
-		applyMaterialTheme(themeColor);
+
 	render_clear_demo_action();
 
+	frappe.call({
+		method: "material_theme.theme_api.get_user_theme_color",
+		callback: function (r) {
+			const saved = r.message;
+			const themeColor = saved ? saved.hex : localStorage.getItem("ItrostackThemeColor") || "#3C6090";
+			applyMaterialTheme(themeColor, null);
+		},
+	});
 });
 
 function render_clear_demo_action() {
-	let demo_action = $(
+	const demo_action = $(
 		`<a class="dropdown-item" onclick="return material.theme.clear_demo()">
 			${__("Change Theme Color")}
 		</a>`
 	);
-
 	demo_action.appendTo($("#toolbar-user"));
-	// initThemeCustomizer();
 }
 
-function applyMaterialTheme(SelectedColor)
-{
-	var r = document.querySelector(':root');
-	const theme = themeFromSourceColor(argbFromHex(SelectedColor), [
+function applyMaterialTheme(SelectedColor, colorName) {
+	const hex = SelectedColor.startsWith("#") ? SelectedColor : "#" + SelectedColor;
+	const r = document.querySelector(":root");
+	const theme = themeFromSourceColor(argbFromHex(hex), [
 		{
-		  name: "custom-1",
-		  value: argbFromHex(SelectedColor),
-		  blend: true,
+			name: "custom-1",
+			value: argbFromHex(hex),
+			blend: true,
 		},
-	  ]);
-	  
-	// Check if the user has dark mode turned on
-	const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+	]);
 
-	// Apply the theme to the body by updating custom properties for material tokens
-	applyTheme(theme, {target: document.body});
-	
+	applyTheme(theme, { target: document.body });
+
 	const color = hexFromArgb(theme.schemes.light.primary);
 	localStorage.setItem("ItrostackThemeColor", color);
-	
-	//Setting the primary color for frappe.
-	r.style.setProperty('--primary', color);
+	r.style.setProperty("--primary", color);
+
+	if (
+		colorName &&
+		frappe.session.user &&
+		frappe.session.user !== "Guest"
+	) {
+		frappe.call({
+			method: "material_theme.theme_api.set_user_theme_color",
+			args: { color_name: colorName },
+		});
+	}
 }
 
 material.theme.clear_demo = function () {
-	var themeColor = localStorage.getItem("ItrostackThemeColor");
-	if(!themeColor)
-		themeColor = "#3C6090";
-	// new dialog
-	var d = new frappe.ui.Dialog({
-		title: "Select Color",
+	let themeColor = localStorage.getItem("ItrostackThemeColor");
+	if (!themeColor) themeColor = "#3C6090";
+	if (!themeColor.startsWith("#")) themeColor = "#" + themeColor;
+
+	const inputId = "material-theme-color-input-" + frappe.utils.get_random(8);
+	const d = new frappe.ui.Dialog({
+		title: __("Select Color"),
 		fields: [
 			{
-				label: __("Theme color"),
-				fieldname: "Color",
-				fieldtype: "Color",
-				default: themeColor,
+				fieldtype: "HTML",
+				fieldname: "color_picker",
+				options: `
+					<div class="form-group">
+						<label class="control-label">${__("Custom Color")}</label>
+						<input type="color" id="${inputId}" value="${themeColor}" style="width: 100%; height: 48px; border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; padding: 2px; background: var(--control-bg);">
+					</div>
+				`,
 			},
 		],
 	});
 
-
-
 	d.set_primary_action(__("Set Color"), function () {
-		applyMaterialTheme(d.get_value('Color'));
-		d.hide();
+		const input = document.getElementById(inputId);
+		const customHex = input ? input.value : null;
+		if (customHex) {
+			applyMaterialTheme(customHex, null);
+			d.hide();
+			frappe.show_alert({ message: __("Theme color updated"), indicator: "blue" });
+		}
 	});
 
 	d.show();
-}
+};
