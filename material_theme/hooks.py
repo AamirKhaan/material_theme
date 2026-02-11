@@ -182,6 +182,17 @@ override_whitelisted_methods = {
     "frappe.core.doctype.user.user.switch_theme": "material_theme.overrides.switch_theme.switch_theme"
 }
 
+# Add "Change Theme Color" to user dropdown when Material theme is active
+standard_navbar_items = [
+	{
+		"item_label": "Change Theme Color",
+		"item_type": "Action",
+		"action": "material.theme.clear_demo()",
+		"is_standard": 1,
+		"condition": "document.documentElement.getAttribute('data-theme-mode') === 'material'",
+	},
+]
+
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,

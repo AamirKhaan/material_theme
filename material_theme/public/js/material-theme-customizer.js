@@ -1,13 +1,11 @@
 frappe.provide("material.theme");
 
-$(document).on("toolbar_setup", function () {
+function init_material_theme_customizer() {
 	const root = document.documentElement;
 	const theme_mode = root.getAttribute("data-theme-mode");
 	if (theme_mode !== "material") {
 		return;
 	}
-
-	render_clear_demo_action();
 
 	frappe.call({
 		method: "material_theme.theme_api.get_user_theme_color",
@@ -17,16 +15,11 @@ $(document).on("toolbar_setup", function () {
 			applyMaterialTheme(themeColor, null);
 		},
 	});
-});
-
-function render_clear_demo_action() {
-	const demo_action = $(
-		`<a class="dropdown-item" onclick="return material.theme.clear_demo()">
-			${__("Change Theme Color")}
-		</a>`
-	);
-	demo_action.appendTo($("#toolbar-user"));
 }
+
+// Change Theme Color is added via standard_navbar_items hook (Navbar Settings)
+// and only displays when data-theme-mode="material"
+$(document).on("app_ready", init_material_theme_customizer);
 
 function applyMaterialTheme(SelectedColor, colorName) {
 	const hex = SelectedColor.startsWith("#") ? SelectedColor : "#" + SelectedColor;
