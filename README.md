@@ -1,4 +1,4 @@
-## Material Theme
+## Material Theme Development
 
 Material Theme by Itrostack LLP
 
