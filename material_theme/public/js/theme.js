@@ -18,8 +18,8 @@ frappe.ui.ThemeSwitcher = class CustomThemeSwitcher extends frappe.ui.ThemeSwitc
 				},
 				{
 					name: "material",
-					label: "Material by Itrostack",
-					info: "Theme By Itrostack LLP"
+					label: "Material",
+					info: "Material Theme"
 				},
 				{
 					name: "automatic",
